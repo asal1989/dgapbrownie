@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../api.js";
 
+const blankMantra = { text: "", meaning: "", slot: "any", active: true };
 const blank = { name: "", category: "", description: "", price: "", image: "", available: true };
 
 export default function Admin() {
@@ -10,6 +11,8 @@ export default function Admin() {
   const [products, setProducts] = useState([]);
   const [messages, setMessages] = useState([]);
   const [editing, setEditing] = useState(blank);
+  const [mantras, setMantras] = useState([]);
+  const [mantra, setMantra] = useState(blankMantra);
   const [pages, setPages] = useState({ home: null, about: null });
 
   const logout = () => { sessionStorage.removeItem("token"); setToken(""); };
@@ -17,6 +20,7 @@ export default function Admin() {
   const load = useCallback(async () => {
     try {
       setProducts(await api("/admin/products", { token }));
+      setMantras(await api("/admin/mantras", { token }));
       setMessages(await api("/admin/messages", { token }));
       const [home, about] = await Promise.all([api("/pages/home"), api("/pages/about")]);
       setPages({ home, about });
@@ -52,6 +56,22 @@ export default function Admin() {
   const removeProduct = async (id) => {
     if (!confirm("Delete this product?")) return;
     await api(`/admin/products/${id}`, { method: "DELETE", token });
+    load();
+  };
+
+  const saveMantra = async (e) => {
+    e.preventDefault();
+    try {
+      if (mantra.id) await api(`/admin/mantras/${mantra.id}`, { method: "PUT", body: mantra, token });
+      else await api("/admin/mantras", { method: "POST", body: mantra, token });
+      setMantra(blankMantra);
+      load();
+    } catch (err) { setError(err.message); }
+  };
+
+  const removeMantra = async (id) => {
+    if (!confirm("Delete this mantra?")) return;
+    await api(`/admin/mantras/${id}`, { method: "DELETE", token });
     load();
   };
 
@@ -103,6 +123,36 @@ export default function Admin() {
               <td>{p.name}{!p.available && " (hidden)"}</td><td>{p.category}</td><td>₹{p.price}</td>
               <td><button onClick={() => setEditing({ ...p, available: !!p.available })}>Edit</button>
                   <button onClick={() => removeProduct(p.id)}>Delete</button></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <h2>{mantra.id ? "Edit mantra" : "Add mantra"}</h2>
+      <form onSubmit={saveMantra} className="form">
+        <input placeholder="Mantra" value={mantra.text} onChange={(e) => setMantra({ ...mantra, text: e.target.value })} required />
+        <input placeholder="Meaning" value={mantra.meaning} onChange={(e) => setMantra({ ...mantra, meaning: e.target.value })} />
+        <select value={mantra.slot} onChange={(e) => setMantra({ ...mantra, slot: e.target.value })}>
+          <option value="any">Any time</option>
+          <option value="morning">Morning</option>
+          <option value="afternoon">Afternoon</option>
+          <option value="evening">Evening</option>
+        </select>
+        <label><input type="checkbox" checked={!!mantra.active} onChange={(e) => setMantra({ ...mantra, active: e.target.checked })} /> Active</label>
+        <div>
+          <button className="btn">{mantra.id ? "Update" : "Add"}</button>
+          {mantra.id && <button type="button" onClick={() => setMantra(blankMantra)}>Cancel</button>}
+        </div>
+      </form>
+
+      <h2>Mantras</h2>
+      <table>
+        <tbody>
+          {mantras.map((m) => (
+            <tr key={m.id}>
+              <td>{m.text}{!m.active && " (hidden)"}</td><td>{m.meaning}</td><td>{m.slot}</td>
+              <td><button onClick={() => setMantra({ ...m, active: !!m.active })}>Edit</button>
+                  <button onClick={() => removeMantra(m.id)}>Delete</button></td>
             </tr>
           ))}
         </tbody>

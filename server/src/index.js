@@ -47,6 +47,9 @@ app.get("/api/pages/:slug", (req, res) => {
   row ? res.json(row) : res.status(404).json({ error: "Not found" });
 });
 
+app.get("/api/mantras", (req, res) =>
+  res.json(db.prepare("SELECT id, text, meaning, slot FROM mantras WHERE active = 1 ORDER BY id").all()));
+
 app.post("/api/contact", (req, res) => {
   const { name, email, phone = "", message } = req.body || {};
   if (!name || !message || !/^\S+@\S+\.\S+$/.test(email || ""))
@@ -94,6 +97,34 @@ app.put("/api/admin/products/:id", auth, (req, res) => {
 
 app.delete("/api/admin/products/:id", auth, (req, res) => {
   db.prepare("DELETE FROM products WHERE id = ?").run(req.params.id);
+  res.json({ ok: true });
+});
+
+const SLOTS = ["any", "morning", "afternoon", "evening"];
+const mantraFields = (b) => [
+  String(b.text || "").trim().slice(0, 300), String(b.meaning || "").trim().slice(0, 300),
+  SLOTS.includes(b.slot) ? b.slot : "any", b.active === false || b.active === 0 ? 0 : 1
+];
+
+app.get("/api/admin/mantras", auth, (req, res) =>
+  res.json(db.prepare("SELECT * FROM mantras ORDER BY id DESC").all()));
+
+app.post("/api/admin/mantras", auth, (req, res) => {
+  const f = mantraFields(req.body || {});
+  if (!f[0]) return res.status(400).json({ error: "Mantra text is required" });
+  const r = db.prepare("INSERT INTO mantras (text, meaning, slot, active) VALUES (?,?,?,?)").run(...f);
+  res.status(201).json({ id: Number(r.lastInsertRowid) });
+});
+
+app.put("/api/admin/mantras/:id", auth, (req, res) => {
+  const f = mantraFields(req.body || {});
+  if (!f[0]) return res.status(400).json({ error: "Mantra text is required" });
+  db.prepare("UPDATE mantras SET text=?, meaning=?, slot=?, active=? WHERE id=?").run(...f, req.params.id);
+  res.json({ ok: true });
+});
+
+app.delete("/api/admin/mantras/:id", auth, (req, res) => {
+  db.prepare("DELETE FROM mantras WHERE id = ?").run(req.params.id);
   res.json({ ok: true });
 });
 

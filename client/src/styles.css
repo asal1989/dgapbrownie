@@ -16,3 +16,12 @@ button, .btn { background: var(--accent); color: #fff; border: 0; border-radius:
 .error { color: #b00020; }
 table { width: 100%; border-collapse: collapse; }
 td { padding: 6px; border-bottom: 1px solid #e3d5c6; }
+.mantra-box { background: var(--brown); color: var(--cream); border: 1px solid var(--accent); border-radius: 16px; padding: 24px 20px 16px; text-align: center; margin-bottom: 24px; }
+.mantra-label { font-size: .75rem; letter-spacing: .2em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+.mantra { min-height: 90px; display: flex; flex-direction: column; justify-content: center; gap: 6px; transition: opacity .35s ease, transform .35s ease; }
+.mantra.fade { opacity: 0; transform: translateY(8px); }
+.mantra-text { font-family: Georgia, serif; font-size: 1.5rem; }
+.mantra-meaning { font-style: italic; opacity: .75; }
+.mantra-controls { margin-top: 14px; }
+.mantra-controls button { background: transparent; border: 1px solid var(--accent); color: var(--accent); border-radius: 999px; }
+@media (prefers-reduced-motion: reduce) { .mantra { transition: none; } }

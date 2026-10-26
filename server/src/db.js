@@ -18,6 +18,13 @@ CREATE TABLE IF NOT EXISTS pages (
   title TEXT NOT NULL,
   body TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS mantras (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  text TEXT NOT NULL,
+  meaning TEXT NOT NULL DEFAULT '',
+  slot TEXT NOT NULL DEFAULT 'any',
+  active INTEGER NOT NULL DEFAULT 1
+);
 CREATE TABLE IF NOT EXISTS messages (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
@@ -33,6 +40,10 @@ if (db.prepare("SELECT COUNT(*) AS n FROM products").get().n === 0) {
     "INSERT INTO products (name, category, description, price, image) VALUES (?,?,?,?,?)"
   );
   for (const x of seed.products) p.run(x.name, x.category, x.description, x.price, x.image);
+}
+if (db.prepare("SELECT COUNT(*) AS n FROM mantras").get().n === 0) {
+  const m = db.prepare("INSERT INTO mantras (text, meaning, slot) VALUES (?,?,?)");
+  for (const x of seed.mantras) m.run(x.text, x.meaning, x.slot);
 }
 const pg = db.prepare("INSERT OR IGNORE INTO pages (slug, title, body) VALUES (?,?,?)");
 for (const x of seed.pages) pg.run(x.slug, x.title, x.body);
